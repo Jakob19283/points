@@ -122,7 +122,7 @@ app.innerHTML=`<h2>Hallo ${user.username}</h2>
 <div class="box"><h3>Punkte</h3><div class="big">${user.points}</div></div>
 <div class="box"><h3>Aktion</h3>
 <select><option>Verdienen</option><option>Ausgeben</option></select>
-<select><option>Aufgabe</option><option>Bonus</option><option>Kauf</option></select>
+<input type="text" placeholder="Art der Aktion" name="aktion" required>
 <form class="submit-anim" onsubmit="animateForm(this)" action="https://formsubmit.co/jakob.pammler@isarnwohld.org" method="POST">
 <input type="hidden" name="user" value="${user.username}">
 <input type="hidden" name="_subject" value="Punkte Anfrage">
