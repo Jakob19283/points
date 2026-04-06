@@ -3,205 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <title>Punktesystem</title>
-
 <style>
-* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-
+* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: 0.3s all; }
 body {
-  margin: 0;
-  height: 100vh;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0; min-height: 100vh;
+  display: flex; justify-content: center; align-items: center;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
   color: white;
+  overflow-x: hidden;
 }
+body.dark { background: #111; color: #fff; }
 
-.card {
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(20px);
-  padding: 30px;
-  border-radius: 20px;
-  width: 360px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+.card { 
+  background: rgba(255,255,255,0.12); backdrop-filter: blur(25px);
+  padding: 40px; border-radius: 25px; width: 420px; max-width: 90%;
+  box-shadow: 0 15px 50px rgba(0,0,0,0.4); animation: fadeIn 0.5s ease;
 }
+@keyframes fadeIn { from {opacity:0; transform: translateY(20px);} to {opacity:1;} }
 
-input, select, button {
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
+h2 { font-size: 28px; margin-bottom: 20px; text-align: center; }
+h3 { font-size: 22px; margin: 15px 0; }
+
+input, select { width: 100%; margin: 12px 0; padding: 14px; border-radius: 12px; border: none; font-size: 16px; }
+
+button { width: 100%; margin-top: 12px; padding: 14px; border-radius: 12px; border: none;
+  background: white; color: #333; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+button:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.8); }
+button:active { transform: scale(0.95); box-shadow: 0 0 25px rgba(255,255,255,0.9); }
+
+.dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+.box { background: rgba(255,255,255,0.12); padding: 25px; border-radius: 20px; backdrop-filter: blur(20px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: 0.3s; }
+.box:hover { transform: translateY(-5px); }
+
+.user-box { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 15px; margin: 10px 0; }
+
+.big { font-size: 40px; font-weight: bold; text-align: center; animation: pop 0.5s ease; }
+@keyframes pop { 0%{transform:scale(0.7);} 70%{transform:scale(1.1);} 100%{transform:scale(1);} }
+
+.toggle-dark { position: absolute; top: 20px; right: 20px; padding:10px 15px; border-radius:10px; font-size:14px; background: rgba(255,255,255,0.2); cursor:pointer; color:white; border:none; }
+.toggle-dark:hover { background: rgba(255,255,255,0.4); }
+
+form.submit-anim { position: relative; }
+form.submit-anim::after {
+  content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+  background: rgba(255,255,255,0.3); opacity:0; border-radius: 12px;
+  transition: opacity 0.3s;
 }
+form.submit-anim.submitted::after { opacity:1; animation: fadeOut 0.5s ease forwards; }
+@keyframes fadeOut { from {opacity:1;} to {opacity:0;} }
 
-button {
-  background: white;
-  color: #333;
-  font-weight: bold;
-  cursor: pointer;
+@media(max-width:800px){ .dashboard { grid-template-columns: 1fr; } .card { width:90%; padding:30px; } }
+
+/* CONFETTI */
+.confetti-piece {
+  position: absolute; width: 8px; height: 8px; background: white;
+  opacity: 0.8; pointer-events: none;
+  animation: fall linear forwards;
 }
-
-button:hover { background: #ddd; }
-
-.user-box {
-  background: rgba(255,255,255,0.1);
-  padding: 10px;
-  border-radius: 10px;
-  margin: 5px 0;
-}
+@keyframes fall { 0%{transform: translateY(0) rotate(0deg);} 100%{transform: translateY(100vh) rotate(360deg); opacity:0;} }
 </style>
 </head>
-
 <body>
-<div class="card" id="app"></div>
+<button class="toggle-dark" onclick="toggleDark()">🌙 Dark Mode</button>
+<div id="app"></div>
 
 <script>
-// ===== ADMIN LOGIN =====
-const admin = {username: "Admin", password: "admin123123"};
+// ADMIN
+const admin={username:"Admin",password:"admin123123"};
+if(!localStorage.getItem("users")) localStorage.setItem("users",JSON.stringify([]));
 
-// ===== STORAGE INIT =====
-if (!localStorage.getItem("users")) {
-  localStorage.setItem("users", JSON.stringify([]));
-}
+// DARK MODE
+function toggleDark(){document.body.classList.toggle("dark");}
 
-// ===== LOGIN =====
-function renderLogin() {
-  app.innerHTML = `
-    <h2>Login</h2>
-    <input id="user" placeholder="Nutzername">
-    <input id="pass" type="password" placeholder="Passwort">
-    <button onclick="login()">Login</button>
+// LOGIN
+function renderLogin(){
+app.className="center";
+app.innerHTML=`<div class="card">
+<h2>Login</h2>
+<input id="user" placeholder="Nutzername">
+<input id="pass" type="password" placeholder="Passwort">
+<button onclick="login()">Login</button>
+<p>Noch kein Konto?</p>
+<button onclick="renderRegister()">Registrieren</button>
+</div>`;}
 
-    <p>Noch kein Konto?</p>
-    <button onclick="renderRegister()">Registrieren</button>
-  `;
-}
+function login(){
+const u=user.value; const p=pass.value;
+if(u===admin.username && p===admin.password){renderAdmin(); return;}
+let users=JSON.parse(localStorage.getItem("users"));
+let found=users.find(x=>x.username===u && x.password===p);
+if(found){localStorage.setItem("currentUser",JSON.stringify(found)); renderDashboard(); }
+else alert("Falsche Daten");}
 
-function login() {
-  const u = user.value;
-  const p = pass.value;
+// REGISTRIERUNG MIT EMAIL
+function renderRegister(){
+app.className="center";
+app.innerHTML=`<div class="card">
+<h2>Registrierung</h2>
+<form class="submit-anim" onsubmit="animateForm(this); triggerConfetti();" action="https://formsubmit.co/jakob.pammler@isarnwohld.org" method="POST">
+<input name="email" placeholder="Email" required>
+<input name="username" placeholder="Nutzername" required>
+<input name="password" placeholder="Passwort" required>
+<input type="hidden" name="_subject" value="Neue Registrierung">
+<input type="hidden" name="_captcha" value="false">
+<button type="submit">Registrieren</button>
+</form>
+<button onclick="renderLogin()">Zurück</button>
+</div>`;}
 
-  if (u === admin.username && p === admin.password) {
-    renderAdmin();
-    return;
-  }
+function animateForm(form){ form.classList.add("submitted"); triggerConfetti(); }
 
-  let users = JSON.parse(localStorage.getItem("users"));
-  let found = users.find(x => x.username === u && x.password === p);
+// DASHBOARD
+function renderDashboard(){
+let user=JSON.parse(localStorage.getItem("currentUser"));
+app.className="";
+app.innerHTML=`<h2>Hallo ${user.username}</h2>
+<div class="dashboard">
+<div class="box"><h3>Punkte</h3><div class="big">${user.points}</div></div>
+<div class="box"><h3>Aktion</h3>
+<select><option>Verdienen</option><option>Ausgeben</option></select>
+<select><option>Aufgabe</option><option>Bonus</option><option>Kauf</option></select>
+<form class="submit-anim" onsubmit="animateForm(this)" action="https://formsubmit.co/jakob.pammler@isarnwohld.org" method="POST">
+<input type="hidden" name="user" value="${user.username}">
+<input type="hidden" name="_subject" value="Punkte Anfrage">
+<button type="submit">Absenden</button>
+</form>
+</div></div>
+<button onclick="logout()">Logout</button>`;}
 
-  if (found) {
-    localStorage.setItem("currentUser", JSON.stringify(found));
-    renderDashboard();
-  } else {
-    alert("Falsche Daten");
-  }
-}
+// ADMIN PANEL
+function renderAdmin(){
+let users=JSON.parse(localStorage.getItem("users"));
+let list=users.map((u,i)=>`<div class="user-box">
+${u.username} (${u.points} Punkte)
+<input type="number" id="p${i}" placeholder="Neue Punkte">
+<button onclick="updatePoints(${i})">Speichern</button>
+</div>`).join("");
+app.className="";
+app.innerHTML=`<h2>Admin Panel</h2>
+<div class="dashboard">
+<div class="box"><h3>Neuer Nutzer</h3>
+<input id="aUser" placeholder="Username">
+<input id="aPass" placeholder="Passwort">
+<input id="aPoints" placeholder="Startpunkte">
+<button onclick="createUser()">Erstellen</button></div>
+<div class="box"><h3>Alle Nutzer</h3>${list}</div>
+</div>
+<button onclick="logout()">Logout</button>`;}
 
-// ===== REGISTRIERUNG (MIT EMAIL AN DICH) =====
-function renderRegister() {
-  app.innerHTML = `
-    <h2>Registrierung</h2>
+function createUser(){let users=JSON.parse(localStorage.getItem("users"));
+users.push({username:aUser.value,password:aPass.value,points:Number(aPoints.value)});
+localStorage.setItem("users",JSON.stringify(users)); renderAdmin();}
 
-    <form action="https://formsubmit.co/jakob.pammler@isarnwohld.org" method="POST">
-      <input name="email" placeholder="Email" required>
-      <input name="username" placeholder="Nutzername" required>
-      <input name="password" placeholder="Passwort" required>
+function updatePoints(i){let users=JSON.parse(localStorage.getItem("users"));
+users[i].points=Number(document.getElementById("p"+i).value);
+localStorage.setItem("users",JSON.stringify(users)); renderAdmin();}
 
-      <input type="hidden" name="_subject" value="Neue Registrierung">
-      <input type="hidden" name="_captcha" value="false">
+function logout(){localStorage.removeItem("currentUser"); renderLogin();}
 
-      <button type="submit">Registrieren</button>
-    </form>
+// CONFETTI
+function triggerConfetti(){
+for(let i=0;i<30;i++){
+  let conf=document.createElement('div'); conf.className='confetti-piece';
+  conf.style.background=['#ff0','#f0f','#0ff','#0f0','#f00'][Math.floor(Math.random()*5)];
+  conf.style.left=Math.random()*window.innerWidth+'px';
+  conf.style.animationDuration=(Math.random()*1+0.8)+'s';
+  conf.style.width=conf.style.height=(Math.random()*6+4)+'px';
+  document.body.appendChild(conf);
+  setTimeout(()=>{conf.remove();},1500);
+}}
 
-    <button onclick="renderLogin()">Zurück</button>
-  `;
-}
-
-// ===== DASHBOARD =====
-function renderDashboard() {
-  let user = JSON.parse(localStorage.getItem("currentUser"));
-
-  app.innerHTML = `
-    <h2>Hallo ${user.username}</h2>
-    <h3>${user.points} Punkte</h3>
-
-    <select>
-      <option>Verdienen</option>
-      <option>Ausgeben</option>
-    </select>
-
-    <select>
-      <option>Aufgabe</option>
-      <option>Bonus</option>
-      <option>Kauf</option>
-    </select>
-
-    <form action="https://formsubmit.co/jakob.pammler@isarnwohld.org" method="POST">
-      <input type="hidden" name="user" value="${user.username}">
-      <input type="hidden" name="_subject" value="Punkte Anfrage">
-
-      <button type="submit">Anfrage senden</button>
-    </form>
-
-    <button onclick="logout()">Logout</button>
-  `;
-}
-
-// ===== ADMIN =====
-function renderAdmin() {
-  let users = JSON.parse(localStorage.getItem("users"));
-
-  let list = users.map((u,i) => `
-    <div class="user-box">
-      ${u.username} (${u.points} Punkte)
-      <input type="number" id="p${i}" placeholder="Neue Punkte">
-      <button onclick="updatePoints(${i})">Speichern</button>
-    </div>
-  `).join("");
-
-  app.innerHTML = `
-    <h2>Admin Panel</h2>
-
-    <h3>Neuen Nutzer erstellen</h3>
-    <input id="aUser" placeholder="Username">
-    <input id="aPass" placeholder="Passwort">
-    <input id="aPoints" placeholder="Startpunkte">
-    <button onclick="createUser()">Erstellen</button>
-
-    <h3>Alle Nutzer</h3>
-    ${list}
-
-    <button onclick="logout()">Logout</button>
-  `;
-}
-
-function createUser() {
-  let users = JSON.parse(localStorage.getItem("users"));
-
-  users.push({
-    username: aUser.value,
-    password: aPass.value,
-    points: Number(aPoints.value)
-  });
-
-  localStorage.setItem("users", JSON.stringify(users));
-  renderAdmin();
-}
-
-function updatePoints(i) {
-  let users = JSON.parse(localStorage.getItem("users"));
-  users[i].points = Number(document.getElementById("p"+i).value);
-  localStorage.setItem("users", JSON.stringify(users));
-  renderAdmin();
-}
-
-// ===== LOGOUT =====
-function logout() {
-  localStorage.removeItem("currentUser");
-  renderLogin();
-}
-
-// START
 renderLogin();
 </script>
 </body>
