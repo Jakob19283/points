@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Punkte System</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  padding: 30px;
+  border-radius: 20px;
+  width: 350px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(20px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+
+input, select, button {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  background: white;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #ddd;
+}
+
+.hidden { display: none; }
+
+.small { font-size: 12px; opacity: 0.8; }
+
+.user-box {
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  border-radius: 10px;
+  margin: 5px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="app"></div>
+
+<script>
+// ===== INIT =====
+const admin = {username: "Admin", password: "admin123123"};
+
+if (!localStorage.getItem("users")) {
+  localStorage.setItem("users", JSON.stringify([]));
+}
+
+// ===== RENDER LOGIN =====
+function renderLogin() {
+  app.innerHTML = `
+    <h2>Login</h2>
+    <input id="user" placeholder="Nutzername">
+    <input id="pass" type="password" placeholder="Passwort">
+    <button onclick="login()">Login</button>
+
+    <p class="small">Noch kein Konto?</p>
+    <button onclick="renderRegister()">Registrieren</button>
+  `;
+}
+
+// ===== LOGIN =====
+function login() {
+  const u = user.value;
+  const p = pass.value;
+
+  if (u === admin.username && p === admin.password) {
+    renderAdmin();
+    return;
+  }
+
+  let users = JSON.parse(localStorage.getItem("users"));
+  let found = users.find(x => x.username === u && x.password === p);
+
+  if (found) {
+    localStorage.setItem("currentUser", JSON.stringify(found));
+    renderDashboard();
+  } else {
+    alert("Falsche Daten");
+  }
+}
+
+// ===== REGISTER =====
+function renderRegister() {
+  app.innerHTML = `
+    <h2>Registrieren</h2>
+    <input id="email" placeholder="Email">
+    <input id="newUser" placeholder="Nutzername">
+    <input id="newPass" type="password" placeholder="Passwort">
+    <button onclick="register()">Registrieren</button>
+    <button onclick="renderLogin()">Zurück</button>
+  `;
+}
+
+function register() {
+  let users = JSON.parse(localStorage.getItem("users"));
+
+  users.push({
+    email: email.value,
+    username: newUser.value,
+    password: newPass.value,
+    points: 0
+  });
+
+  localStorage.setItem("users", JSON.stringify(users));
+
+  alert("Registrierung gesendet (simuliert)");
+  renderLogin();
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  let user = JSON.parse(localStorage.getItem("currentUser"));
+
+  app.innerHTML = `
+    <h2>Hallo ${user.username}</h2>
+    <h3>${user.points} Punkte</h3>
+
+    <select id="type">
+      <option value="verdienen">Verdienen</option>
+      <option value="ausgeben">Ausgeben</option>
+    </select>
+
+    <select id="action">
+      <option value="aufgabe">Aufgabe</option>
+      <option value="bonus">Bonus</option>
+      <option value="kauf">Kauf</option>
+    </select>
+
+    <button onclick="submitAction()">Absenden</button>
+    <button onclick="logout()">Logout</button>
+  `;
+}
+
+function submitAction() {
+  alert("Anfrage gesendet (simuliert)");
+}
+
+// ===== ADMIN =====
+function renderAdmin() {
+  let users = JSON.parse(localStorage.getItem("users"));
+
+  let list = users.map((u,i) => `
+    <div class="user-box">
+      ${u.username} (${u.points} Punkte)
+      <input type="number" id="p${i}" placeholder="Punkte ändern">
+      <button onclick="updatePoints(${i})">Speichern</button>
+    </div>
+  `).join("");
+
+  app.innerHTML = `
+    <h2>Admin Panel</h2>
+
+    <h3>User erstellen</h3>
+    <input id="aUser" placeholder="Username">
+    <input id="aPass" placeholder="Passwort">
+    <input id="aPoints" placeholder="Punkte">
+    <button onclick="createUser()">Erstellen</button>
+
+    <h3>Alle Nutzer</h3>
+    ${list}
+
+    <button onclick="logout()">Logout</button>
+  `;
+}
+
+function createUser() {
+  let users = JSON.parse(localStorage.getItem("users"));
+
+  users.push({
+    username: aUser.value,
+    password: aPass.value,
+    points: Number(aPoints.value)
+  });
+
+  localStorage.setItem("users", JSON.stringify(users));
+  renderAdmin();
+}
+
+function updatePoints(i) {
+  let users = JSON.parse(localStorage.getItem("users"));
+  users[i].points = Number(document.getElementById("p"+i).value);
+  localStorage.setItem("users", JSON.stringify(users));
+  renderAdmin();
+}
+
+// ===== LOGOUT =====
+function logout() {
+  localStorage.removeItem("currentUser");
+  renderLogin();
+}
+
+// START
+renderLogin();
+</script>
+
+</body>
+</html>
